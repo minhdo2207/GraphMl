@@ -1,0 +1,28 @@
+# Default hyperparameters. Override on the CLI, e.g.:
+#   python main.py --model proposed --drop-edge 0.3
+# Fields mirror src/utils/config.py :: Config
+
+# data
+dataset: Cora
+data_root: data
+normalize_features: true
+
+# model
+model: gcn
+hidden_dim: 64        # MLP / GCN / GraphSAGE hidden size
+heads: 8              # attention heads (GAT / proposed)
+gat_hidden: 8         # per-head hidden size (GAT / proposed)
+dropout: 0.6
+drop_edge: 0.2        # DropEdge probability (proposed)
+residual: true        # H0 @ W_skip residual (proposed)
+
+# optimisation
+lr: 0.005
+weight_decay: 0.0005
+epochs: 200
+patience: 100         # early stopping on val accuracy (0 = off)
+
+# experiment
+seed: 42
+seeds: 5              # seeds for mean +/- std reporting
+device: auto          # auto | cpu | cuda

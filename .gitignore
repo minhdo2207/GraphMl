@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Data (downloaded by PyG Planetoid loader)
+data/
+*.pt.tmp
+
+# Generated outputs (keep folders via .gitkeep)
+results/*.csv
+figures/*.png
+figures/*.pdf
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
