@@ -11,7 +11,7 @@ import sys
 # make ``src`` importable when run as a standalone script
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.data import get_data, print_statistics  # noqa: E402
+from src.data_loader import get_data, print_statistics  # noqa: E402
 
 
 def main() -> None:

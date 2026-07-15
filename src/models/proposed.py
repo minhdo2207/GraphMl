@@ -19,7 +19,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GATConv
+from torch_geometric.nn import GATConv, GATv2Conv
 from torch_geometric.utils import dropout_edge
 
 
@@ -33,9 +33,9 @@ class ResidualMixingGAT(nn.Module):
         self.residual = residual
 
         # H1: multi-head attention over one-hop neighbours (concatenated heads)
-        self.gat_multi = GATConv(in_dim, gat_hidden, heads=heads, dropout=dropout)
+        self.gat_multi = GATv2Conv(in_dim, gat_hidden, heads=heads, dropout=dropout)
         # H2: single-head attention projecting to class logits
-        self.gat_single = GATConv(gat_hidden * heads, out_dim, heads=1,
+        self.gat_single = GATv2Conv(gat_hidden * heads, out_dim, heads=1,
                                   concat=False, dropout=dropout)
         # H0 @ W_skip: linear skip connection carrying raw features to the output
         self.skip = nn.Linear(in_dim, out_dim, bias=False) if residual else None

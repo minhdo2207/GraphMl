@@ -10,7 +10,7 @@ from typing import Dict, List
 
 import numpy as np
 
-from ..data import get_data
+from ..data_loader import get_data
 from ..models import build_model
 from ..utils.config import Config
 from ..utils.seed import set_seed
