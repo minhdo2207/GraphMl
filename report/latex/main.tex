@@ -50,9 +50,9 @@ A Skip-Connected Attention Model for Node Classification on Cora}
   Hanoi University of Science and Technology \\
   \texttt{minhdotpc@gmail.com} \\
   \AND
-  Do Tuan Minh (20261057M) \quad Tran Tien Dung (20252574M) \quad
-  Tran Manh Tien (20252762M) \\
-  Hoang Huy Chien (20261069M) \quad Nguyen Tien Duc (20252076M)
+  Do Tuan Minh (20261057M) \quad Hoang Huy Chien (20261069M) \quad
+  Tran Tien Dung (20252574M) \\
+  Tran Manh Tien (20252762M) \quad Nguyen Tien Duc (20252076M)
 }
 
 \begin{document}
@@ -829,12 +829,49 @@ neutral on a graph as small and clean as Cora. All code, configurations and figu
 are released for full reproducibility.
 
 % ---- contributions ----
-\paragraph{Author contributions.}
-\textbf{Do Tuan Minh}: integration, introduction \& problem formulation, report
-editing. \textbf{Tran Tien Dung}: dataset pipeline, MLP/GCN baselines.
-\textbf{Tran Manh Tien}: GraphSAGE/GAT and architecture comparison.
-\textbf{Hoang Huy Chien}: proposed model and ablation.
-\textbf{Nguyen Tien Duc}: figures, result analysis, discussion \& limitations.
+\section*{Author Contributions}
+\addcontentsline{toc}{section}{Author Contributions}
+All five members contributed to the project. Individual responsibilities and the
+concrete work delivered by each member are listed in Table~\ref{tab:contrib}.
+
+\begin{table}[h]
+  \centering
+  \caption{Contributions of each project member.}
+  \label{tab:contrib}
+  \small
+  \begin{tabular}{p{3.4cm}p{2.0cm}p{8.3cm}}
+    \toprule
+    Member & Student ID & Contributions / work done \\
+    \midrule
+    Do Tuan Minh & 20261057M &
+      Team lead and final integration. Defined the code structure and the experiment
+      table format; wrote the Introduction (\S1) and Problem Formulation (\S2);
+      performed final editing and quality control of the full report; assembled the
+      LaTeX/PDF and the GitHub repository. \\
+    \addlinespace
+    Hoang Huy Chien & 20261069M &
+      Proposed model and ablation. Implemented the Residual Multi-Head Mixing GAT
+      (residual skip $H_0 W_{\text{skip}}$ and DropEdge); ran the ablation study
+      (residual, DropEdge, number of heads); drafted the proposed-method (\S4.6) and
+      ablation (\S8) sections. \\
+    \addlinespace
+    Tran Tien Dung & 20252574M &
+      Dataset and MLP/GCN baselines. Implemented the Cora data loader and dataset
+      statistics; implemented the MLP and 2-layer GCN; ran the MLP-vs-GCN experiments
+      and produced the baseline results; drafted the dataset description. \\
+    \addlinespace
+    Tran Manh Tien & 20252762M &
+      GraphSAGE and GAT baselines. Implemented GraphSAGE and vanilla GAT; tuned basic
+      hyperparameters; produced the architecture comparison (GCN vs.\ GraphSAGE vs.\
+      GAT); drafted the GraphSAGE/GAT model descriptions (\S4.3--4.4). \\
+    \addlinespace
+    Nguyen Tien Duc & 20252076M &
+      Analysis and visualization. Produced the training/validation curves, the result
+      bar charts, and the confusion matrix; formatted the result tables; wrote the
+      Discussion (\S9) and Limitations (\S10); prepared the presentation material. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 {\small
 \bibliographystyle{plainnat}
