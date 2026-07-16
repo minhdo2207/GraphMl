@@ -38,7 +38,7 @@ def train(model: torch.nn.Module, data, cfg: Config, verbose: bool = False) -> T
                                  weight_decay=cfg.weight_decay)
 
     result = TrainResult(best_val_acc=0.0, test_acc=0.0, best_epoch=-1)
-    best_state = copy.deepcopy(model.state_dict())
+    best_state = None
     epochs_no_improve = 0
 
     for epoch in range(1, cfg.epochs + 1):
@@ -79,5 +79,6 @@ def train(model: torch.nn.Module, data, cfg: Config, verbose: bool = False) -> T
                 print(f"  early stop at epoch {epoch} (patience {cfg.patience})")
             break
 
-    model.load_state_dict(best_state)  # restore best-val weights
+    if best_state is not None:
+        model.load_state_dict(best_state)  # restore best-val weights
     return result

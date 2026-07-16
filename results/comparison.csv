@@ -1,0 +1,4 @@
+model,test_acc_mean,test_acc_std,val_acc_mean,n_seeds
+gcn,0.8276,0.005,0.8156,5
+graphsage,0.813,0.0077,0.8,5
+gat,0.8272,0.008,0.816,5

@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residual Multi-Head Mixing GAT — Graph ML Project</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0F1419;
+            --bg-card: #1A1F2E;
+            --bg-card-hover: #232838;
+            --primary: #4ECDC4;
+            --primary-dim: rgba(78, 205, 196, 0.15);
+            --accent: #FF6B6B;
+            --accent-dim: rgba(255, 107, 107, 0.15);
+            --gold: #FFD93D;
+            --blue: #6C9FFF;
+            --purple: #B47AEA;
+            --text: #E8E8E8;
+            --text-dim: #8892A4;
+            --border: rgba(255,255,255,0.08);
+            --gradient-primary: linear-gradient(135deg, #4ECDC4, #6C9FFF);
+            --gradient-accent: linear-gradient(135deg, #FF6B6B, #FFD93D);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .slide-deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @media (min-width: 769px) {
+            .slide-deck {
+                max-width: calc(100vh * 16 / 9);
+                max-height: calc(100vw * 9 / 16);
+                margin: auto;
+                position: absolute;
+                inset: 0;
+            }
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 48px 64px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.45s ease;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        .slide.active { opacity: 1; visibility: visible; }
+
+        .slide-content {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Typography */
+        h1 { font-family: 'Inter', sans-serif; font-weight: 700; }
+        h2 { font-family: 'Inter', sans-serif; font-weight: 600; font-size: clamp(24px, 3.5vw, 36px); color: var(--text); margin-bottom: 8px; }
+        h3 { font-family: 'Inter', sans-serif; font-weight: 500; font-size: clamp(16px, 2vw, 20px); color: var(--text-dim); }
+
+        .slide-title {
+            font-size: clamp(32px, 5vw, 56px);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.15;
+            font-weight: 700;
+        }
+
+        .subtitle { color: var(--text-dim); font-size: clamp(14px, 2vw, 20px); font-weight: 300; }
+
+        p, li { font-size: clamp(13px, 1.6vw, 17px); line-height: 1.6; color: var(--text); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: background 0.2s;
+        }
+
+        .card-highlight {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+
+        .card-accent {
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+        /* Metrics */
+        .metric-number {
+            font-size: clamp(28px, 4vw, 48px);
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+        /* Code block */
+        .code-block {
+            background: #0D1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(11px, 1.3vw, 15px);
+            line-height: 1.7;
+            color: var(--primary);
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-comment { color: var(--text-dim); }
+        .code-keyword { color: var(--purple); }
+        .code-value { color: var(--gold); }
+
+        /* Table */
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: clamp(12px, 1.4vw, 15px);
+        }
+
+        .result-table th {
+            padding: 10px 16px;
+            text-align: left;
+            color: var(--text-dim);
+            font-weight: 500;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-table tr:last-child td { border-bottom: none; }
+
+        .result-table .best {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .result-table .highlight-row {
+            background: var(--primary-dim);
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-primary { background: var(--primary-dim); color: var(--primary); }
+        .tag-accent { background: var(--accent-dim); color: var(--accent); }
+        .tag-blue { background: rgba(108,159,255,0.15); color: var(--blue); }
+
+        /* Team grid */
+        .team-member {
+            text-align: center;
+            padding: 16px 8px;
+        }
+
+        .team-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--bg);
+        }
+
+        .team-name { font-size: 13px; font-weight: 500; }
+        .team-role { font-size: 11px; color: var(--text-dim); }
+
+        /* Architecture diagram */
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 0;
+        }
+
+        .arch-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .arch-block.active {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+
+        .arch-arrow {
+            font-size: 24px;
+            color: var(--text-dim);
+        }
+
+        .arch-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+        .arch-formula { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary); }
+
+        /* Bullet list styling */
+        ul { list-style: none; padding-left: 0; }
+        ul li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+        }
+
+        /* Speaker notes */
+        .speaker-notes {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 31, 46, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            max-width: 800px;
+            font-size: 12px;
+            color: var(--text-dim);
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+
+        .speaker-notes.visible { display: block; }
+
+        /* Progress & Nav */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transition: width 0.3s;
+            z-index: 1000;
+        }
+
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+        .slide-counter { color: var(--text-dim); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+
+        .notes-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 24px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            z-index: 1001;
+        }
+
+        .notes-toggle:hover { background: rgba(255,255,255,0.12); }
+
+        /* Animations */
+        .animate-fade-up { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+        .slide.active .animate-fade-up { opacity: 0; animation: fadeUp 0.6s ease-out forwards; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+        .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+        .stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+        /* Delta badges */
+        .delta-up { color: var(--primary); font-weight: 600; }
+        .delta-down { color: var(--accent); font-weight: 600; }
+        .delta-neutral { color: var(--text-dim); }
+
+        /* Chart container */
+        .chart-container {
+            width: 100%;
+            max-height: 320px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide { padding: 24px 20px; }
+            .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="slide-deck">
+
+    <!-- ==================== SLIDE 1: Title ==================== -->
+    <div class="slide active">
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="slide-title" style="font-size: clamp(28px, 4.5vw, 52px);">Residual Multi-Head Mixing GAT</h1>
+            <p class="subtitle" style="font-size: clamp(16px, 2.2vw, 24px); margin-top: -8px;">Semi-Supervised Node Classification on Cora</p>
+            <div style="height: 24px;"></div>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <span class="tag tag-primary">Graph Neural Networks</span>
+                <span class="tag tag-blue">GATv2</span>
+                <span class="tag tag-accent">Residual Skip Connection</span>
+            </div>
+            <div style="height: 16px;"></div>
+            <p style="color: var(--text-dim); font-size: 14px;">Đồ án Graph ML — Đại học Bách khoa Hà Nội</p>
+            <div class="grid-5" style="max-width: 600px; margin-top: 8px;">
+                <div class="team-member"><div class="team-avatar">M</div><div class="team-name">Tuấn Minh</div><div class="team-role">Integration</div></div>
+                <div class="team-member"><div class="team-avatar">D</div><div class="team-name">Tiến Dũng</div><div class="team-role">Baselines</div></div>
+                <div class="team-member"><div class="team-avatar">T</div><div class="team-name">Mạnh Tiến</div><div class="team-role">GNN Models</div></div>
+                <div class="team-member"><div class="team-avatar">C</div><div class="team-name">Huy Chiến</div><div class="team-role">Proposed</div></div>
+                <div class="team-member"><div class="team-avatar">Đ</div><div class="team-name">Tiến Đức</div><div class="team-role">Analysis</div></div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Xin chào mọi người. Nhóm em gồm 5 thành viên, thực hiện đồ án về Graph Neural Networks cho bài toán phân loại node trên đồ thị trích dẫn Cora. Mô hình đề xuất là Residual Multi-Head Mixing GAT, kết hợp attention mechanism với residual skip connection.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 2: Problem ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🎯 Bài toán</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="color: var(--primary); margin-bottom: 12px;">Semi-Supervised Node Classification</h3>
+                    <ul>
+                        <li>Cho đồ thị G = (V, E) với <strong>2708 nodes</strong> (papers)</li>
+                        <li>Mỗi node có <strong>1433-dim</strong> bag-of-words features</li>
+                        <li>Chỉ <strong>140 nodes</strong> có nhãn training (5.2%)</li>
+                        <li>Phân loại vào <strong>7 classes</strong> (lĩnh vực nghiên cứu)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 style="color: var(--accent); margin-bottom: 12px;">Tại sao Graph Neural Networks?</h3>
+                    <ul>
+                        <li>Cấu trúc trích dẫn mang thông tin quan trọng</li>
+                        <li>Papers cùng lĩnh vực thường cite lẫn nhau</li>
+                        <li>MLP bỏ qua cấu trúc đồ thị → mất thông tin</li>
+                        <li>GNN: message passing giữa các neighbors</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="grid-4" style="margin-top: 8px;">
+                <div class="card" style="text-align: center;"><div class="metric-number">2,708</div><div class="metric-label">Nodes (papers)</div></div>
+                <div class="card" style="text-align: center;"><div class="metric-number">5,278</div><div class="metric-label">Edges (citations)</div></div>
+                <div class="card" style="text-align: center;"><div class="metric-number">1,433</div><div class="metric-label">Features (BoW)</div></div>
+                <div class="card" style="text-align: center;"><div class="metric-number">140</div><div class="metric-label">Training labels</div></div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Bài toán: phân loại papers vào 7 lĩnh vực nghiên cứu dựa trên citation network. Chỉ có 140 papers có nhãn training (5.2%), còn lại 500 validation và 1000 test. Đây là bài toán semi-supervised điển hình. GNN phù hợp vì papers cùng lĩnh vực thường cite nhau, tạo thành clusters trên đồ thị.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 3: Baseline Models ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>📚 Các mô hình so sánh</h2>
+            <div class="grid-4 stagger">
+                <div class="card animate-fade-up">
+                    <h3 style="color: var(--accent);">MLP</h3>
+                    <p style="font-size: 12px; margin-top: 8px;">2-layer fully connected. <strong>Không dùng</strong> thông tin đồ thị. Baseline thấp nhất.</p>
+                    <div class="code-block" style="font-size: 11px; margin-top: 8px; padding: 10px 12px;">H1 = ReLU(X·W1)
+H2 = Dropout(H1)·W2</div>
+                </div>
+                <div class="card animate-fade-up">
+                    <h3 style="color: var(--blue);">GCN</h3>
+                    <p style="font-size: 12px; margin-top: 8px;">Graph Convolutional Network. Mean aggregation từ neighbors. Đơn giản nhưng hiệu quả.</p>
+                    <div class="code-block" style="font-size: 11px; margin-top: 8px; padding: 10px 12px;">H = σ(D̃⁻¹ᐟ²ÃD̃⁻¹ᐟ²·X·W)</div>
+                </div>
+                <div class="card animate-fade-up">
+                    <h3 style="color: var(--purple);">GraphSAGE</h3>
+                    <p style="font-size: 12px; margin-top: 8px;">SAmple and aggreGatE. Inductive learning. Mean aggregator + skip connection.</p>
+                    <div class="code-block" style="font-size: 11px; margin-top: 8px; padding: 10px 12px;">hₙ = σ(W·[hᵥ ‖ mean(hᵤ)])</div>
+                </div>
+                <div class="card animate-fade-up">
+                    <h3 style="color: var(--gold);">GAT</h3>
+                    <p style="font-size: 12px; margin-top: 8px;">Graph Attention Network. Learned attention weights. Multi-head attention.</p>
+                    <div class="code-block" style="font-size: 11px; margin-top: 8px; padding: 10px 12px;">αᵢⱼ = softmax(eᵢⱼ)
+hᵢ = σ(Σ αᵢⱼ·W·hⱼ)</div>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            4 mô hình baseline: MLP là baseline thấp nhất vì bỏ qua cấu trúc đồ thị. GCN dùng spectral convolution với normalized adjacency. GraphSAGE dùng sampling + aggregation cho inductive learning. GAT dùng attention mechanism để learn mức độ quan trọng của từng neighbor.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 4: Proposed Model ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🏗️ Mô hình đề xuất: Residual Multi-Head Mixing GAT</h2>
+            <div class="arch-flow">
+                <div class="arch-block">
+                    <div class="arch-formula">H₀ = X</div>
+                    <div class="arch-label">Raw features (1433-dim)</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-block">
+                    <div class="arch-formula">Dropout(H₀)</div>
+                    <div class="arch-label">p = 0.6</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-block active">
+                    <div class="arch-formula">GATv2 × 8 heads</div>
+                    <div class="arch-label">Multi-head (64-dim)</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-block">
+                    <div class="arch-formula">ELU + Dropout</div>
+                    <div class="arch-label">Activation</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-block active">
+                    <div class="arch-formula">GATv2 × 1 head</div>
+                    <div class="arch-label">Single-head (7-dim)</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 4px;">
+                <div class="arch-arrow" style="transform: rotate(90deg);">→</div>
+            </div>
+            <div class="card card-highlight" style="text-align: center; max-width: 700px; margin: 0 auto;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap;">
+                    <div>
+                        <div class="arch-formula" style="font-size: 18px;">Z = H₂ + H₀ · W_skip</div>
+                        <div class="arch-label" style="margin-top: 8px;">Residual skip from raw features → output logits</div>
+                    </div>
+                    <div style="border-left: 1px solid var(--border); padding-left: 24px;">
+                        <div class="arch-formula" style="font-size: 14px; color: var(--accent);">DropEdge: p = 0.2</div>
+                        <div class="arch-label">Random edge removal (training only)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid-3" style="margin-top: 8px;">
+                <div class="card card-accent" style="padding: 16px;">
+                    <strong style="color: var(--primary);">GATv2</strong>
+                    <p style="font-size: 12px;">Improved attention: dynamic coefficients, không bị static ranking problem của GAT</p>
+                </div>
+                <div class="card card-accent" style="padding: 16px;">
+                    <strong style="color: var(--primary);">Residual Skip</strong>
+                    <p style="font-size: 12px;">H₀·W_skip: gradient flow trực tiếp, chống over-smoothing, giữ raw feature information</p>
+                </div>
+                <div class="card card-accent" style="padding: 16px;">
+                    <strong style="color: var(--primary);">DropEdge</strong>
+                    <p style="font-size: 12px;">Xóa ngẫu nhiên 20% edges khi train → structural augmentation + regularization</p>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Mô hình đề xuất gồm 3 đóng góp chính: (1) GATv2 thay vì GAT - cải thiện attention quality, (2) Residual skip connection từ raw features H0 trực tiếp đến output Z, giúp gradient flow và chống over-smoothing, (3) DropEdge xóa 20% edges khi training làm data augmentation. W_skip là linear projection 1433→7 không có bias.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 5: Experiment Setup ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>⚙️ Setup thực nghiệm</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="color: var(--primary); margin-bottom: 12px;">Hyperparameters</h3>
+                    <table class="result-table">
+                        <tr><td>Optimizer</td><td>Adam</td></tr>
+                        <tr><td>Learning rate</td><td>0.005</td></tr>
+                        <tr><td>Weight decay</td><td>5×10⁻⁴</td></tr>
+                        <tr><td>Epochs</td><td>200</td></tr>
+                        <tr><td>Early stopping</td><td>patience = 100</td></tr>
+                        <tr><td>Dropout</td><td>0.6</td></tr>
+                        <tr><td>Hidden dim (GCN/SAGE)</td><td>64</td></tr>
+                        <tr><td>GAT heads</td><td>8 (per-head dim = 8)</td></tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3 style="color: var(--blue); margin-bottom: 12px;">Protocol</h3>
+                    <ul>
+                        <li><strong>5 random seeds</strong> (42-46) → report mean ± std</li>
+                        <li>Model selection: best <strong>validation</strong> accuracy</li>
+                        <li>Report: <strong>test</strong> accuracy at best-val epoch</li>
+                        <li>Standard Cora split: 140/500/1000</li>
+                        <li>NormalizeFeatures transform</li>
+                    </ul>
+                    <div style="height: 16px;"></div>
+                    <h3 style="color: var(--blue); margin-bottom: 12px;">Environment</h3>
+                    <ul>
+                        <li>PyTorch 2.13 + PyG 2.8</li>
+                        <li>CPU training (Cora nhỏ)</li>
+                        <li>Reproducible: seed Python/NumPy/PyTorch/cuDNN</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Tất cả models dùng chung hyperparameters để đảm bảo so sánh công bằng. Train tối đa 200 epochs với early stopping patience 100 trên validation accuracy. Report test accuracy tại epoch có validation tốt nhất. Chạy 5 seeds rồi lấy mean ± std. Seed đầy đủ cho reproducibility: Python random, NumPy, PyTorch, cuDNN deterministic.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 6: Results — All Models ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>📊 Kết quả: So sánh tất cả mô hình</h2>
+            <div class="grid-2">
+                <div class="card" style="padding: 16px;">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="modelCompChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <table class="result-table">
+                        <thead>
+                            <tr><th>Model</th><th>Test Acc</th><th>± std</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>MLP</td><td>0.5888</td><td>±0.0104</td></tr>
+                            <tr><td>GraphSAGE</td><td>0.8130</td><td>±0.0077</td></tr>
+                            <tr><td>GAT</td><td>0.8272</td><td>±0.0080</td></tr>
+                            <tr><td>GCN</td><td>0.8276</td><td>±0.0050</td></tr>
+                            <tr class="highlight-row"><td class="best">Proposed ★</td><td class="best">0.8326</td><td class="best">±0.0080</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="card card-highlight" style="margin-top: 12px; padding: 12px 16px;">
+                        <p style="font-size: 13px;"><strong style="color: var(--primary);">+24%</strong> cải thiện từ MLP → GNN (cấu trúc đồ thị rất quan trọng)</p>
+                        <p style="font-size: 13px; margin-top: 4px;"><strong style="color: var(--primary);">+0.5%</strong> Proposed vượt GAT baseline</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Kết quả chính: MLP chỉ đạt 0.59, tất cả GNN đều >0.81, confirm graph structure rất quan trọng (+24%). GCN và GAT gần tương đương (~0.827). Proposed model đạt 0.8326 — tốt nhất trong tất cả models. Standard deviation thấp (0.005-0.014) cho thấy training ổn định, không phụ thuộc nhiều vào random seed.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 7: Ablation Study ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🔬 Ablation Study</h2>
+            <div class="grid-2">
+                <div class="card" style="padding: 16px;">
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="ablationChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <table class="result-table">
+                        <thead>
+                            <tr><th>Variant</th><th>Test Acc</th><th>Δ</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>GAT (base)</td><td>0.8164</td><td>—</td></tr>
+                            <tr><td>+ residual</td><td>0.8334</td><td class="delta-up">+1.7%</td></tr>
+                            <tr class="highlight-row"><td class="best">+ residual + dropedge</td><td class="best">0.8326</td><td class="delta-up">+1.6%</td></tr>
+                            <tr><td>full, heads=4</td><td>0.8260</td><td class="delta-up">+1.0%</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 12px;">
+                        <div class="card card-accent" style="padding: 12px;">
+                            <p style="font-size: 13px;"><span class="delta-up">✓ Residual:</span> +1.7% test accuracy — skip connection hiệu quả</p>
+                        </div>
+                        <div class="card card-accent" style="padding: 12px; margin-top: 8px;">
+                            <p style="font-size: 13px;"><span class="delta-neutral">≈ DropEdge:</span> −0.1% — không đáng kể trên Cora nhỏ</p>
+                        </div>
+                        <div class="card card-accent" style="padding: 12px; margin-top: 8px;">
+                            <p style="font-size: 13px;"><span class="delta-down">↓ Heads 8→4:</span> −0.7% — nhiều heads giúp học tốt hơn</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Ablation study: bật/tắt từng component để đánh giá đóng góp. (1) Residual skip connection cải thiện 1.7% — đây là đóng góp chính. (2) DropEdge gần như không có tác dụng, có thể vì Cora quá nhỏ (2708 nodes) nên regularization không cần thiết. (3) Giảm heads từ 8 xuống 4 làm giảm 0.7%, confirm multi-head attention hữu ích.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 8: Key Findings ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>💡 Thảo luận</h2>
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 12px;">Phát hiện chính</h3>
+                    <div class="card card-accent" style="margin-bottom: 12px; padding: 16px;">
+                        <strong>Cấu trúc đồ thị rất quan trọng</strong>
+                        <p style="font-size: 13px;">MLP 0.59 → GNN 0.82: +24%. Citation context một mình không đủ, cần message passing.</p>
+                    </div>
+                    <div class="card card-accent" style="margin-bottom: 12px; padding: 16px;">
+                        <strong>Residual skip connection hiệu quả</strong>
+                        <p style="font-size: 13px;">+1.7% test accuracy. Gradient flow trực tiếp từ output về raw features, chống over-smoothing.</p>
+                    </div>
+                    <div class="card card-accent" style="padding: 16px;">
+                        <strong>Training ổn định</strong>
+                        <p style="font-size: 13px;">Std thấp (0.005-0.014) trên 5 seeds. Val-test gap ~1-2%, không overfitting nghiêm trọng.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent); margin-bottom: 12px;">Bất ngờ</h3>
+                    <div class="card" style="margin-bottom: 12px; padding: 16px; border-left: 3px solid var(--accent);">
+                        <strong>GCN ≈ GAT</strong>
+                        <p style="font-size: 13px;">Attention mechanism không vượt trội so với simple mean aggregation trên Cora. Dataset quá nhỏ và đồng nhất.</p>
+                    </div>
+                    <div class="card" style="margin-bottom: 12px; padding: 16px; border-left: 3px solid var(--accent);">
+                        <strong>DropEdge không hiệu quả</strong>
+                        <p style="font-size: 13px;">−0.1% khi thêm DropEdge. Cora chỉ có 5278 edges, mô hình đã đủ capacity, regularization thừa.</p>
+                    </div>
+                    <div class="card" style="padding: 16px; border-left: 3px solid var(--gold);">
+                        <strong>Giải thích</strong>
+                        <p style="font-size: 13px;">Cora là dataset nhỏ, đồng nhất → GNN đơn giản đã đủ tốt. DropEdge/attention phát huy tác dụng trên đồ thị lớn hơn.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            3 phát hiện chính: (1) Graph structure cải thiện 24% so với MLP — confirm tầm quan trọng của message passing. (2) Residual skip connection +1.7% — đóng góp quan trọng nhất của proposed model. (3) Training ổn định với std thấp. 2 bất ngờ: GCN và GAT gần tương đương, attention không giúp ích nhiều. DropEdge gần như vô tác dụng trên Cora nhỏ. Giải thích: Cora quá nhỏ và đồng nhất, các techniques phức tạp không cần thiết.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 9: Limitations ==================== -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>⚠️ Hạn chế & Hướng phát triển</h2>
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: var(--accent); margin-bottom: 12px;">Hạn chế</h3>
+                    <ul>
+                        <li><strong>1 dataset:</strong> Chỉ Cora (2708 nodes, 7 classes). Chưa test Citeseer, Pubmed, OGB.</li>
+                        <li><strong>2 layers:</strong> Chưa khám phá kiến trúc sâu hơn (3-5 layers).</li>
+                        <li><strong>Limited regularization:</strong> Chỉ DropEdge, chưa thử Mixup, Label Smoothing.</li>
+                        <li><strong>Accuracy only:</strong> Chưa phân tích F1-score, confusion matrix từng class.</li>
+                        <li><strong>Hyperparameters:</strong> Chưa tối ưu hệ thống (chỉ dùng defaults).</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 12px;">Hướng phát triển</h3>
+                    <ul>
+                        <li><strong>More datasets:</strong> Citeseer, Pubmed, Arxiv, OGB để kiểm chứng tổng quát.</li>
+                        <li><strong>Deeper GNN:</strong> 3-5 layers + Jumping Knowledge + GraphNorm.</li>
+                        <li><strong>Graph Transformer:</strong> Global attention over entire graph.</li>
+                        <li><strong>Attention viz:</strong> Visualize attention weights để interpret mô hình.</li>
+                        <li><strong>Real-world apps:</strong> Recommendation, social network analysis.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Hạn chế chính: chỉ test trên 1 dataset nhỏ, kiến trúc nông 2 layers, chưa tối ưu hyperparameters. Hướng phát triển: test thêm Citeseer/Pubmed/Arxiv, thử deeper architectures với Jumping Knowledge, áp dụng Graph Transformer cho global attention, visualize attention weights để hiểu mô hình học gì, và ứng dụng thực tế như recommendation systems.
+        </div>
+    </div>
+
+    <!-- ==================== SLIDE 10: Conclusion ==================== -->
+    <div class="slide">
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h2 style="font-size: clamp(28px, 4vw, 44px);">Kết luận</h2>
+            <div style="height: 16px;"></div>
+            <div class="grid-3" style="max-width: 800px;">
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <div class="metric-number" style="font-size: 36px;">0.8326</div>
+                    <div class="metric-label">Best test accuracy</div>
+                    <p style="font-size: 12px; margin-top: 8px;">Proposed model vượt tất cả baselines</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <div class="metric-number" style="font-size: 36px;">+1.7%</div>
+                    <div class="metric-label">Residual improvement</div>
+                    <p style="font-size: 12px; margin-top: 8px;">Skip connection là đóng góp chính</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <div class="metric-number" style="font-size: 36px;">+24%</div>
+                    <div class="metric-label">Graph vs MLP</div>
+                    <p style="font-size: 12px; margin-top: 8px;">Cấu trúc đồ thị rất quan trọng</p>
+                </div>
+            </div>
+            <div style="height: 24px;"></div>
+            <p style="color: var(--text-dim); font-size: 16px;">Residual Multi-Head Mixing GAT kết hợp thành công multi-head attention<br>với input-feature skip connection cho node classification.</p>
+            <div style="height: 32px;"></div>
+            <h3 style="color: var(--primary); font-size: 28px;">Cảm ơn & Hỏi đáp</h3>
+            <p style="color: var(--text-dim); font-size: 13px; margin-top: 8px;">Code: github.com/minhdo2207/GraphMl</p>
+        </div>
+        <div class="speaker-notes" data-notes>
+            Tóm tắt: Proposed model đạt 0.8326 test accuracy — tốt nhất. Residual skip connection đóng góp +1.7%. Graph structure cải thiện +24% so với MLP. Kết luận: kết hợp multi-head attention với residual skip connection là hướng đi đúng. Cảm ơn thầy/cô và các bạn. Sẵn sàng trả lời câu hỏi.
+        </div>
+    </div>
+
+    </div><!-- /.slide-deck -->
+
+    <!-- Navigation -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">←</button>
+        <span class="slide-counter"><span id="current">1</span> / <span id="total">10</span></span>
+        <button class="nav-btn" onclick="nextSlide()">→</button>
+    </div>
+
+    <button class="notes-toggle" onclick="toggleNotes()">📝 Notes</button>
+
+    <script>
+        let current = 1;
+        const total = document.querySelectorAll('.slide').length;
+        document.getElementById('total').textContent = total;
+        let notesVisible = false;
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > total) n = total;
+            current = n;
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.toggle('active', i === n - 1);
+            });
+            document.getElementById('current').textContent = n;
+            document.getElementById('progressBar').style.width = (n / total * 100) + '%';
+            // Re-init charts on visible slide
+            setTimeout(() => initCharts(), 100);
+        }
+
+        function nextSlide() { showSlide(current + 1); }
+        function prevSlide() { showSlide(current - 1); }
+
+        function toggleNotes() {
+            notesVisible = !notesVisible;
+            document.querySelectorAll('.speaker-notes').forEach(n => {
+                n.classList.toggle('visible', notesVisible);
+            });
+            // Only show notes for current slide
+            if (notesVisible) {
+                document.querySelectorAll('.speaker-notes').forEach((n, i) => {
+                    n.style.display = (i === current - 1 && notesVisible) ? 'block' : 'none';
+                });
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+            if (e.key === 'n' || e.key === 'N') { toggleNotes(); }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-controls') && !e.target.closest('.notes-toggle')) nextSlide();
+        });
+
+        showSlide(1);
+
+        // ===== CHARTS =====
+        let chartsInitialized = false;
+
+        function initCharts() {
+            if (chartsInitialized) return;
+            chartsInitialized = true;
+
+            // Model Comparison Bar Chart (Slide 6)
+            const ctx1 = document.getElementById('modelCompChart');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['MLP', 'GraphSAGE', 'GAT', 'GCN', 'Proposed ★'],
+                        datasets: [{
+                            label: 'Test Accuracy',
+                            data: [0.5888, 0.8130, 0.8272, 0.8276, 0.8326],
+                            backgroundColor: [
+                                'rgba(255, 107, 107, 0.7)',
+                                'rgba(180, 122, 234, 0.7)',
+                                'rgba(255, 217, 61, 0.7)',
+                                'rgba(108, 159, 255, 0.7)',
+                                'rgba(78, 205, 196, 0.9)'
+                            ],
+                            borderColor: [
+                                '#FF6B6B', '#B47AEA', '#FFD93D', '#6C9FFF', '#4ECDC4'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }, {
+                            label: '± std',
+                            data: [0.0104, 0.0077, 0.0080, 0.0050, 0.0080],
+                            type: 'line',
+                            borderColor: 'rgba(255,255,255,0.3)',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            borderWidth: 1,
+                            tension: 0.3,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.04)' },
+                                ticks: { color: '#8892A4', font: { size: 11 } }
+                            },
+                            y: {
+                                min: 0.5,
+                                max: 0.88,
+                                grid: { color: 'rgba(255,255,255,0.04)' },
+                                ticks: { color: '#8892A4', font: { size: 11 }, callback: v => v.toFixed(2) }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Ablation Chart (Slide 7)
+            const ctx2 = document.getElementById('ablationChart');
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: ['GAT\n(base)', '+ residual', '+ residual\n+ dropedge', 'full\nheads=4'],
+                        datasets: [{
+                            label: 'Test Accuracy',
+                            data: [0.8164, 0.8334, 0.8326, 0.8260],
+                            backgroundColor: [
+                                'rgba(108, 159, 255, 0.7)',
+                                'rgba(78, 205, 196, 0.8)',
+                                'rgba(78, 205, 196, 0.9)',
+                                'rgba(255, 217, 61, 0.7)'
+                            ],
+                            borderColor: ['#6C9FFF', '#4ECDC4', '#4ECDC4', '#FFD93D'],
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                min: 0.80,
+                                max: 0.85,
+                                grid: { color: 'rgba(255,255,255,0.04)' },
+                                ticks: { color: '#8892A4', font: { size: 11 }, callback: v => v.toFixed(2) }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: '#8892A4', font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Init charts on first load
+        setTimeout(() => initCharts(), 500);
+    </script>
+</body>
+</html>

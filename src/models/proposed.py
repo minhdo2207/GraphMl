@@ -19,7 +19,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GATConv, GATv2Conv
+from torch_geometric.nn import GATv2Conv
 from torch_geometric.utils import dropout_edge
 
 
