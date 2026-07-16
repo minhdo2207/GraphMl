@@ -48,7 +48,7 @@ python main.py --model proposed        # train 1 model bất kỳ
 Mỗi experiment tự ghi CSV vào `results/` và ảnh curve vào `figures/`.
 
 **File cần đụng tới cho từng người:**
-- **P2 (Dũng):** [src/data/dataset.py](src/data/dataset.py), [src/models/mlp.py](src/models/mlp.py), [src/models/gcn.py](src/models/gcn.py)
+- **P2 (Dũng):** [src/data_loader/data_loader.py](src/data_loader/data_loader.py), [src/models/mlp.py](src/models/mlp.py), [src/models/gcn.py](src/models/gcn.py)
 - **P3 (Tiến):** [src/models/graphsage.py](src/models/graphsage.py), [src/models/gat.py](src/models/gat.py)
 - **P4 (Chiến):** [src/models/proposed.py](src/models/proposed.py) (cờ `residual`, `drop_edge`, `heads`)
 - **P5 (Đức):** [src/utils/plots.py](src/utils/plots.py)
@@ -82,7 +82,7 @@ GraphMl/
 ├── configs/default.yaml        # toàn bộ hyperparameter
 ├── notebooks/demo.ipynb        # Colab chạy end-to-end (Run all)
 ├── src/
-│   ├── data/dataset.py         # [P2] Cora loader (Planetoid) + statistics
+│   ├── data_loader/data_loader.py  # [P2] Cora loader (Planetoid) + statistics
 │   ├── models/                 # mlp, gcn, graphsage, gat, proposed (+ registry)
 │   ├── training/               # trainer, metrics, multi-seed runner
 │   └── utils/                  # config, seeding, plotting

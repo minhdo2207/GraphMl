@@ -1,5 +1,5 @@
 model,test_acc_mean,test_acc_std,val_acc_mean,n_seeds,variant,residual,drop_edge,heads
-proposed,0.8036,0.0116,0.7948,5,"GAT (no residual, no dropedge)",False,0.0,8
-proposed,0.7838,0.0104,0.7724,5,+ residual skip,True,0.0,8
-proposed,0.7716,0.0092,0.7584,5,+ residual + dropedge (full),True,0.2,8
-proposed,0.7464,0.0041,0.7396,5,"full, heads=4",True,0.2,4
+proposed,0.8164,0.013,0.8196,5,"GAT (no residual, no dropedge)",False,0.0,8
+proposed,0.8334,0.0071,0.8148,5,+ residual skip,True,0.0,8
+proposed,0.8326,0.008,0.8176,5,+ residual + dropedge (full),True,0.2,8
+proposed,0.826,0.0139,0.8032,5,"full, heads=4",True,0.2,4

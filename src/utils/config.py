@@ -52,10 +52,22 @@ class Config:
         return asdict(self)
 
 
-def load_config(path: str | None = None, **overrides: Any) -> Config:
-    """Load a Config, optionally from a YAML file, then apply keyword overrides."""
+_DEFAULT_YAML = "configs/default.yaml"
+
+
+def load_config(path: str | None = _DEFAULT_YAML, **overrides: Any) -> Config:
+    """Load a Config from a YAML file (default: configs/default.yaml), then apply overrides.
+
+    Falls back to dataclass defaults silently when the default YAML is missing.
+    Raises FileNotFoundError only when an explicit path does not exist.
+    """
+    import os
+
     cfg = Config()
-    if path:
+    explicit = path is not None and path != _DEFAULT_YAML
+    path = path or _DEFAULT_YAML
+
+    if os.path.isfile(path):
         try:
             import yaml  # optional dependency
         except ImportError as exc:  # pragma: no cover
@@ -63,4 +75,7 @@ def load_config(path: str | None = None, **overrides: Any) -> Config:
         with open(path, "r", encoding="utf-8") as fh:
             data = yaml.safe_load(fh) or {}
         cfg = cfg.update(**data)
+    elif explicit:
+        raise FileNotFoundError(f"Config file not found: {path}")
+
     return cfg.update(**overrides)
