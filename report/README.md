@@ -1,27 +1,26 @@
 # Report & Presentation
 
-Owner: Person 1 (final integration) + Person 5 (analysis/figures/slides).
+The submittable report is in [`latex/`](latex/) (NeurIPS 2025 style). See
+[`latex/README.md`](latex/README.md) for how to build it.
 
 ## Structure
-- `report/` — LaTeX or Word source of the final report.
+- `latex/` — LaTeX source + compiled `main.pdf` of the final report.
 - Figures are generated into `../figures/` by the experiment scripts.
-- Result tables are generated into `../results/` as CSV (paste into LaTeX/Word).
+- Result tables are generated into `../results/` as CSV.
 
-## Suggested report sections (maps to task split)
-1. **Introduction** + **Problem formulation** — Person 1
-2. **Dataset** (Cora statistics) — Person 2
-3. **Methodology**
-   - MLP / GCN — Person 2
-   - GraphSAGE / GAT — Person 3
-   - Proposed: Residual Multi-Head Mixing GAT — Person 4
-4. **Experiments & Results**
+## Report sections
+1. **Introduction** + **Problem formulation**
+2. **Dataset** (Cora statistics)
+3. **Background** (message-passing framework)
+4. **Models** — MLP / GCN / GraphSAGE / GAT / proposed Residual Multi-Head Mixing GAT
+5. **Experiments & Results**
    - MLP vs GCN (`results/baselines.csv`)
    - Architecture comparison (`results/comparison.csv`)
    - Ablation (`results/ablation.csv`)
-5. **Discussion & Limitations** — Person 5
-6. **Conclusion** — Person 1
+6. **Discussion & Limitations**
+7. **Conclusion**
 
-## Experiment table format (agreed default)
+## Experiment table format
 | Model | Test acc (mean ± std) | Val acc | #seeds |
 |-------|-----------------------|---------|--------|
 

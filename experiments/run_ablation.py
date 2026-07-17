@@ -1,4 +1,4 @@
-"""Experiment: proposed-model ablation (Person 4).
+"""Experiment: proposed-model ablation.
 
 Ablates the two contributions of the Residual Multi-Head Mixing GAT:
   * residual skip connection  (H0 @ W_skip) on / off

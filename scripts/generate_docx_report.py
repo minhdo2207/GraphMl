@@ -141,11 +141,11 @@ def build_report():
     run.bold = True
 
     members = [
-        "Do Tuan Minh (20261057M) — Integration, Report, QA",
-        "Tran Tien Dung (20252574M) — Dataset, MLP/GCN Baselines",
-        "Tran Manh Tien (20252762M) — GraphSAGE, GAT Models",
-        "Hoang Huy Chien (20261069M) — Proposed Model, Ablation",
-        "Nguyen Tien Duc (20252076M) — Analysis, Figures, Slides",
+        "Do Tuan Minh (20261057M)",
+        "Hoang Huy Chien (20261069M)",
+        "Tran Tien Dung (20252574M)",
+        "Tran Manh Tien (20252762M)",
+        "Nguyen Tien Duc (20252076M)",
     ]
     for m in members:
         p = doc.add_paragraph()

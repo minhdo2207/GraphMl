@@ -2,23 +2,19 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/minhdo2207/GraphMl/blob/main/notebooks/demo.ipynb)
 
-Course project — Hanoi University of Science and Technology.
-
-We study **semi-supervised node classification** on the **Cora** citation network.
-The project compares a feature-only **MLP** against graph neural networks (**GCN**,
-**GraphSAGE**, **GAT**) and introduces a **Residual Multi-Head Mixing GAT** that combines
-multi-head attention with an input-feature skip connection and DropEdge regularization.
-
-> **New here? The fastest way to see everything run is the Colab badge above** →
-> `Runtime > Run all`. No local setup needed.
+Semi-supervised **node classification** on the **Cora** citation network. Compares a
+feature-only **MLP** against **GCN**, **GraphSAGE**, **GAT**, and a proposed
+**Residual Multi-Head Mixing GAT** (multi-head attention + input-feature skip
+connection + DropEdge).
 
 ---
 
-## 🚀 Chạy nhanh (2 cách)
+## 🚀 Chạy nhanh
 
-### Cách 1 — Colab (khuyến nghị, không cần cài gì)
-Bấm badge **Open In Colab** ở trên → `Runtime > Run all`. Notebook sẽ tự clone repo,
-cài PyTorch Geometric, chạy full pipeline (dataset stats → baselines → comparison → ablation → vẽ curve).
+### Cách 1 — Colab (không cần cài gì)
+Bấm badge **Open In Colab** ở trên → `Runtime > Run all`. Notebook tự clone repo, cài
+PyTorch Geometric và chạy full pipeline (dataset stats → baselines → comparison →
+ablation → vẽ curve).
 
 ### Cách 2 — Local
 ```bash
@@ -35,68 +31,14 @@ python main.py --model proposed        # train 1 model bất kỳ
 
 ---
 
-## 👥 Ai làm gì & chạy phần của mình thế nào
+## Chạy các experiment
 
-| # | Thành viên (MSSV)           | Phụ trách                         | Chạy phần của mình                    |
-|---|-----------------------------|-----------------------------------|---------------------------------------|
-| 1 | Đỗ Tuấn Minh (20261057M)    | Final integration, report, QA     | tổng hợp `results/*.csv`, `figures/*` |
-| 2 | Trần Tiến Dũng (20252574M)  | Dataset + MLP/GCN baseline        | `python experiments/run_baselines.py` |
-| 3 | Trần Mạnh Tiến (20252762M)  | GraphSAGE + GAT, so sánh kiến trúc| `python experiments/run_comparison.py`|
-| 4 | Hoàng Huy Chiến (20261069M) | Proposed model + ablation         | `python experiments/run_ablation.py`  |
-| 5 | Nguyễn Tiến Đức (20252076M) | Phân tích, figure, slide          | curves/CSV sinh ra ở `figures/` & `results/` |
-
-Mỗi experiment tự ghi CSV vào `results/` và ảnh curve vào `figures/`.
-
-**File cần đụng tới cho từng người:**
-- **P2 (Dũng):** [src/data_loader/data_loader.py](src/data_loader/data_loader.py), [src/models/mlp.py](src/models/mlp.py), [src/models/gcn.py](src/models/gcn.py)
-- **P3 (Tiến):** [src/models/graphsage.py](src/models/graphsage.py), [src/models/gat.py](src/models/gat.py)
-- **P4 (Chiến):** [src/models/proposed.py](src/models/proposed.py) (cờ `residual`, `drop_edge`, `heads`)
-- **P5 (Đức):** [src/utils/plots.py](src/utils/plots.py)
-- **P1 (Minh):** [main.py](main.py), [configs/default.yaml](configs/default.yaml), [report/](report/)
-
-> Thêm model mới: tạo file trong `src/models/`, khai báo ở [src/models/registry.py](src/models/registry.py). Không phải sửa training/experiment script.
-
----
-
-## Proposed model
-
-Cho input features `H0 = X`:
-
+```bash
+python experiments/run_baselines.py    # MLP vs GCN
+python experiments/run_comparison.py   # GCN vs GraphSAGE vs GAT
+python experiments/run_ablation.py     # ablation của proposed model
 ```
-H1 = ELU( GATConv_multi(H0, E) )        # K heads, concat  -> local / one-hop
-H2 = GATConv_single(H1, E)              # single head       -> two-hop
-Z  = softmax( H2 + H0 @ W_skip )        # residual skip from raw features
-```
-
-DropEdge (xóa ngẫu nhiên một phần cạnh) được áp dụng cho `E` trong lúc train như
-structural augmentation + regularization. Cờ `residual` và `drop_edge` tách riêng để
-ablation bật/tắt từng đóng góp độc lập.
-
----
-
-## Cấu trúc repo
-
-```
-GraphMl/
-├── main.py                     # train 1 model: python main.py --model <name>
-├── configs/default.yaml        # toàn bộ hyperparameter
-├── notebooks/demo.ipynb        # Colab chạy end-to-end (Run all)
-├── src/
-│   ├── data_loader/data_loader.py  # [P2] Cora loader (Planetoid) + statistics
-│   ├── models/                 # mlp, gcn, graphsage, gat, proposed (+ registry)
-│   ├── training/               # trainer, metrics, multi-seed runner
-│   └── utils/                  # config, seeding, plotting
-├── experiments/
-│   ├── run_baselines.py        # [P2] MLP vs GCN
-│   ├── run_comparison.py       # [P3] GCN vs GraphSAGE vs GAT
-│   └── run_ablation.py         # [P4] proposed model ablation
-├── scripts/dataset_stats.py    # [P2] dataset statistics
-├── results/                    # metrics CSVs (generated)
-├── figures/                    # curves / plots (generated)
-└── report/                     # LaTeX / Word report + slides
-```
-
----
+Mỗi experiment tự ghi metrics vào `results/*.csv` và curve vào `figures/*.png`.
 
 ## `main.py` — các cờ hay dùng
 
@@ -110,15 +52,51 @@ Tất cả hyperparameter mặc định nằm ở [configs/default.yaml](configs
 
 ---
 
-## Format bảng kết quả (đã thống nhất)
+## Proposed model
 
-| Model | Test acc (mean ± std) | Val acc | #seeds |
-|-------|-----------------------|---------|--------|
+Cho input features `H0 = X`:
 
-Báo cáo **test accuracy tại epoch có validation tốt nhất**, trung bình trên 5 seeds.
+```
+H1 = ELU( GATConv_multi(H0, E) )        # K heads, concat  -> one-hop
+H2 = GATConv_single(H1, E)              # single head       -> two-hop
+Z  = H2 + H0 @ W_skip                   # residual skip từ raw features
+```
+
+DropEdge (xóa ngẫu nhiên một phần cạnh) áp dụng cho `E` lúc train như structural
+augmentation + regularization. Cờ `residual` và `drop_edge` tách riêng để ablation
+bật/tắt từng đóng góp độc lập.
+
+---
+
+## Cấu trúc repo
+
+```
+GraphMl/
+├── main.py                        # train 1 model: python main.py --model <name>
+├── configs/default.yaml           # toàn bộ hyperparameter
+├── notebooks/demo.ipynb           # Colab chạy end-to-end (Run all)
+├── src/
+│   ├── data_loader/data_loader.py # Cora loader (Planetoid) + statistics
+│   ├── models/                    # mlp, gcn, graphsage, gat, proposed (+ registry)
+│   ├── training/                  # trainer, metrics, multi-seed runner
+│   └── utils/                     # config, seeding, plotting
+├── experiments/
+│   ├── run_baselines.py           # MLP vs GCN
+│   ├── run_comparison.py          # GCN vs GraphSAGE vs GAT
+│   └── run_ablation.py            # proposed model ablation
+├── scripts/dataset_stats.py       # dataset statistics
+├── results/                       # metrics CSVs (generated)
+├── figures/                       # curves / plots (generated)
+└── report/                        # report (NeurIPS LaTeX) + slides
+```
+
+> Thêm model mới: tạo file trong `src/models/`, khai báo ở
+> [src/models/registry.py](src/models/registry.py). Không phải sửa training/experiment script.
+
+---
 
 ## Reproducibility
 
 Mọi experiment seed Python/NumPy/PyTorch ([src/utils/seed.py](src/utils/seed.py)) và
-report **mean ± std**. Model selection theo best **validation** accuracy; số báo cáo là
-**test** accuracy tại epoch đó.
+report **mean ± std** trên 5 seeds. Model selection theo best **validation** accuracy;
+số báo cáo là **test** accuracy tại epoch đó.

@@ -1,4 +1,4 @@
-"""Print Cora dataset statistics and mask sanity checks (Person 2).
+"""Print Cora dataset statistics and mask sanity checks.
 
 Usage:
     python scripts/dataset_stats.py

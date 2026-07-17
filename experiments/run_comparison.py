@@ -1,4 +1,4 @@
-"""Experiment: architecture comparison — GCN vs GraphSAGE vs GAT (Person 3).
+"""Experiment: architecture comparison — GCN vs GraphSAGE vs GAT.
 
 Writes results/comparison.csv and figures/comparison_curves.png.
 

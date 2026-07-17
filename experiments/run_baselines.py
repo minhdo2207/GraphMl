@@ -1,4 +1,4 @@
-"""Experiment: MLP vs GCN baseline (Person 2).
+"""Experiment: MLP vs GCN baseline.
 
 Answers "does the graph help?" — compares a feature-only MLP against a 2-layer GCN.
 Writes results/baselines.csv and figures/baselines_curves.png.

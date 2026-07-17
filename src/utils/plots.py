@@ -1,4 +1,4 @@
-"""Plotting and results-table helpers (Person 5).
+"""Plotting and results-table helpers.
 
 Uses a non-interactive matplotlib backend so figures can be generated in Colab or
 headless CI without a display.

@@ -9,7 +9,7 @@ over-smoothing, plus optional DropEdge for structural regularization:
     Z  = H2 + H0 @ W_skip                # residual from raw features -> logits
 
 The ``residual`` and ``drop_edge`` switches exist so the ablation study can turn
-each contribution on/off independently (Person 4).
+each contribution on/off independently.
 
 Note: ``Z`` is returned as raw logits (no softmax); the training loss is
 ``F.cross_entropy``, which applies log-softmax internally.
